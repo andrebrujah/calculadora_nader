@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Simples</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f8ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px 30px;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 1.8em;
+      color: #333333;
+    }
+    input {
+      width: 80%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: #333333;
+	  display: none; /* Oculta inicialmente */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Calculadora Nader</h1>
+    
+    <input type="number" id="inicioPreNatal" placeholder="Início do pré-natal (em semanas)">
+    <input type="number" id="idadeGestacional" placeholder="Idade Gestacional do Parto">
+    <input type="number" id="nroConsultas" placeholder="Número de Consultas">
+    
+    <button onclick="calculate()">Calcular</button>
+    
+    <div class="result" id="result-container">
+      Resultado: <span id="result"></span>
+    </div>
+  </div>
+
+  <script>
+  
+	let tabela = [];
+
+	// Função para carregar e processar o CSV
+	async function carregarCSV(url) {
+	  const resposta = await fetch(url);
+	  const texto = await resposta.text();
+
+	  // Processar o CSV: converter para um array de objetos
+	  const linhas = texto.trim().split('\n');
+
+	  tabela = linhas.map(linha => {
+		const valores = linha.split(',');
+
+		// Processar cada valor como range
+		const processarRange = range => {
+		  const [min, max] = range.split(':').map(Number);
+		  return { min, max };
+		};
+
+		return {
+		  col1: processarRange(valores[0]), // Intervalo da Coluna 1
+		  col2: processarRange(valores[1]), // Intervalo da Coluna 2
+		  col3: processarRange(valores[2]), // Intervalo da Coluna 3
+		  resultado: valores[3] // Resultado
+		};
+	  });
+	}
+	
+	function valorDentroDoRange(valor, range) {
+	  return valor >= range.min && valor <= range.max;
+	}
+
+	function obterResultado(valor1, valor2, valor3) {
+	  const linhaEncontrada = tabela.find(linha =>
+		valorDentroDoRange(valor1, linha.col1) &&
+		valorDentroDoRange(valor2, linha.col2) &&
+		valorDentroDoRange(valor3, linha.col3)
+	  );
+
+	  if (linhaEncontrada) {
+		return linhaEncontrada.resultado;
+	  } else {
+		return 'Nenhum resultado encontrado para os valores fornecidos.';
+	  }
+	}
+  
+    async function calculate() {
+      const inicioPreNatal = parseFloat(document.getElementById('inicioPreNatal').value);
+      const idadeGestacional = parseFloat(document.getElementById('idadeGestacional').value);
+      const nroConsultas = parseFloat(document.getElementById('nroConsultas').value);
+      let result;
+
+      if (isNaN(inicioPreNatal) || isNaN(idadeGestacional) || isNaN(nroConsultas)) {
+        result = "Por favor, insira todos os dados de entrada como números.";
+      } else {
+			// Carregar o CSV
+		  await carregarCSV('https://blue-kangaroo.static.domains/tabela.txt');
+
+		  // Obter resultados com base em valores
+		  console.log(obterResultado(5, 15, 35)); // Saída: Resultado1
+		  console.log(obterResultado(12, 23, 45)); // Saída: Resultado2
+		  console.log(obterResultado(18, 28, 55)); // Saída: Resultado3
+		  console.log(obterResultado(100, 200, 300)); // Saída: Nenhum resultado encontrado para os valores fornecidos.
+		  
+			result = obterResultado(inicioPreNatal, idadeGestacional, nroConsultas);
+	  }
+
+      const resultContainer = document.getElementById('result-container');
+      document.getElementById('result').textContent = result;
+      resultContainer.style.display = "block"; // Mostra o resultado
+    }
+  </script>
+</body>
+</html>
